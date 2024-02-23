@@ -87,7 +87,7 @@ export class ProductController {
       cursor: { id: Number(cursor) },
       categoryId: Number(categoryId),
       productName: productName,
-      serialNo: serialNo
+      serialNo: serialNo,
     });
   }
 }

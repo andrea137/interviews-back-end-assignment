@@ -5,6 +5,7 @@ import { PrismaService } from '../src/prisma/prisma.service';
 import { CategoryDto } from 'src/category/dto';
 import * as pactum from 'pactum';
 import { ProductDto } from 'src/product/dto';
+import { UserDto } from 'src/user/dto';
 
 describe('App e2e', () => {
   let app: INestApplication;
@@ -28,6 +29,58 @@ describe('App e2e', () => {
   });
   afterAll(() => {
     app.close();
+  });
+
+  describe('user', () => {
+    describe('fetch all empty', () => {
+      it('should get', () => {
+        return pactum
+          .spec()
+          .get('/user/fetchallusers')
+          .expectStatus(200)
+          .expectBody([]);
+      });
+    });
+
+    const udto: UserDto = {
+      name: 'TestUser',
+      surname: 'TUSurname',
+      email: 'TUEmail@email.com',
+    };
+    describe('add user', () => {
+      it('should add', () => {
+        return pactum
+          .spec()
+          .post('/user/adduser')
+          .withBody(udto)
+          .expectStatus(201)
+          .stores('userId', 'id');
+      });
+
+      it('should throw if name empty', () => {
+        return pactum
+          .spec()
+          .post('/user/adduser')
+          .withBody({ ...udto, name: undefined })
+          .expectStatus(400);
+      });
+    });
+
+    describe('fetch all users', () => {
+      it('should get', () => {
+        return pactum
+          .spec()
+          .get('/user/fetchallusers')
+          .expectStatus(200)
+          .expectJsonLength(1)
+          .expectJsonLike('0', {
+            id: '$S{userId}',
+            name: udto.name,
+            surname: udto.surname,
+            email: udto.email,
+          });
+      });
+    });
   });
 
   describe('category', () => {
