@@ -56,6 +56,12 @@ export class ProductController {
     description:
       'Cursor (product id) indicating where to start fetching products',
   })
+  @ApiQuery({
+    name: 'categoryId',
+    required: false,
+    description:
+      'Fetch products belonging to categoryId category',
+  })
   @ApiResponse({
     status: 200,
     description: 'The products have been successfully fetched.',
@@ -63,10 +69,12 @@ export class ProductController {
   async fetchProductsCursorPagination(
     @Query('take') take: string,
     @Query('cursor') cursor: string,
+    @Query('categoryId') categoryId: string,
   ): Promise<Product[]> {
     return this.productService.fetchProductsCursorPagination({
       take: Number(take),
       cursor: { id: Number(cursor) },
+      categoryId: Number(categoryId)
     });
   }
 }

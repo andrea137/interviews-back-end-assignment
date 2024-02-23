@@ -32,8 +32,9 @@ export class ProductService {
   async fetchProductsCursorPagination(params: {
     take?: number;
     cursor?: Prisma.ProductWhereUniqueInput | null;
+    categoryId?: number;
   }): Promise<Product[]> {
-    const { take, cursor } = params;
+    const { take, cursor, categoryId } = params;
     const options: Prisma.ProductFindManyArgs = {
       skip: 0,
     };
@@ -45,6 +46,12 @@ export class ProductService {
     if (cursor && cursor.id) {
       options.cursor = cursor;
       options.skip = 1;
+    }
+
+    if (!isNaN(categoryId) && categoryId !== undefined) {
+      options.where = {
+        categoryId: categoryId,
+      };
     }
 
     return this.prisma.product.findMany(options);

@@ -184,7 +184,7 @@ describe('App e2e', () => {
       });
     });
 
-    describe('fetch all products cursor', () => {
+    describe('fetch 2 products without cursor', () => {
       it('should get', () => {
         return pactum
           .spec()
@@ -194,6 +194,50 @@ describe('App e2e', () => {
           .expectJsonLength(2)
           .expectJsonLike('1', {
             serialNo: 'AB456-0',
+            name: dto.name,
+          });
+      });
+    });
+
+    describe('add a second category', () => {
+      it('should add', () => {
+        return pactum
+          .spec()
+          .post('/category/addcategory')
+          .withBody({ name: 'TestCategory2' })
+          .expectStatus(201)
+          .stores('categoryId2', 'id');
+      });
+    });
+
+    describe('add some product', () => {
+      for (let i = 0; i < 5; i++) {
+        // insert and test five times
+        it(`should add product with serialNo iteration ${i}`, () => {
+          const serialNoWithIteration = `BC456-${i}`; // change serialNo for each iteration
+          return pactum
+            .spec()
+            .post('/product/addproduct')
+            .withBody({
+              ...dto,
+              serialNo: serialNoWithIteration,
+              categoryId: '$S{categoryId2}',
+            }) // use the modified serialNo and the new categoryId
+            .expectStatus(201);
+        });
+      }
+    });
+
+    describe('fetch all products cursor of category', () => {
+      it('should get', () => {
+        return pactum
+          .spec()
+          .get('/product/fetchallproductscursor')
+          .withQueryParams({ categoryId: '$S{categoryId2}' })
+          .expectStatus(200)
+          .expectJsonLength(5)
+          .expectJsonLike('1', {
+            serialNo: 'BC456-1',
             name: dto.name,
           });
       });
