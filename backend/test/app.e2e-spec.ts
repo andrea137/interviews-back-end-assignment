@@ -242,5 +242,218 @@ describe('App e2e', () => {
           });
       });
     });
+
+    describe('fetch all products cursor with name', () => {
+      it('should get with category and full name', () => {
+        return pactum
+          .spec()
+          .get('/product/fetchallproductscursor')
+          .withQueryParams({
+            categoryId: '$S{categoryId2}',
+            productName: 'Example Product Name',
+          })
+          .expectStatus(200)
+          .expectJsonLength(5)
+          .expectJsonLike('1', {
+            serialNo: 'BC456-1',
+            name: dto.name,
+          });
+      });
+
+      it('should get with complete name', () => {
+        return pactum
+          .spec()
+          .get('/product/fetchallproductscursor')
+          .withQueryParams({
+            productName: 'Example Product Name',
+          })
+          .expectStatus(200)
+          .expectJsonLength(11)
+          .expectJsonLike('10', {
+            serialNo: 'BC456-4',
+            name: dto.name,
+          });
+      });
+
+      it('should get with partial name', () => {
+        return pactum
+          .spec()
+          .get('/product/fetchallproductscursor')
+          .withQueryParams({
+            categoryId: '$S{categoryId2}',
+            productName: 'duct N',
+          })
+          .expectStatus(200)
+          .expectJsonLength(5)
+          .expectJsonLike('1', {
+            serialNo: 'BC456-1',
+            name: dto.name,
+          });
+      });
+
+      it('should fetch a limited number of products with take, name, and category params', async () => {
+        await pactum
+          .spec()
+          .get('/product/fetchallproductscursor')
+          .withQueryParams({
+            take: '2',
+            categoryId: '$S{categoryId2}',
+            productName: 'duct N',
+          })
+          .expectStatus(200)
+          .expectJsonLength(2)
+          .stores('lastProductId', '[1].id');
+      });
+
+      it('should fech products with take, cursor and name params', async () => {
+        await pactum
+          .spec()
+          .get('/product/fetchallproductscursor')
+          .withQueryParams({
+            take: '3',
+            cursor: '$S{lastProductId}',
+            categoryId: '$S{categoryId2}',
+            productName: 'duct N',
+          })
+          .expectStatus(200)
+          .expectJsonLength(3)
+          .expectJsonLike('2', {
+            serialNo: 'BC456-4',
+            name: dto.name,
+          });
+      });
+
+      it('should not fech products with take, cursor and name params', async () => {
+        await pactum
+          .spec()
+          .get('/product/fetchallproductscursor')
+          .withQueryParams({
+            take: '3',
+            cursor: '$S{lastProductId}',
+            categoryId: '$S{categoryId}',
+          })
+          .expectStatus(200)
+          .expectBody([]);
+      });
+
+      it('should not get', () => {
+        return pactum
+          .spec()
+          .get('/product/fetchallproductscursor')
+          .withQueryParams({
+            categoryId: '$S{categoryId2}',
+            productName: 'Example Prodct Name',
+          })
+          .expectStatus(200)
+          .expectBody([]);
+      });
+    });
+
+    describe('fetch all products cursor with name and serial', () => {
+      it('should get with category and full name and serial', () => {
+        return pactum
+          .spec()
+          .get('/product/fetchallproductscursor')
+          .withQueryParams({
+            categoryId: '$S{categoryId2}',
+            productName: dto.name,
+            serialNo: 'BC456-1',
+          })
+          .expectStatus(200)
+          .expectJsonLength(1)
+          .expectJsonLike('0', {
+            serialNo: 'BC456-1',
+            name: dto.name,
+          });
+      });
+
+      it('should get with complete serialNo', () => {
+        return pactum
+          .spec()
+          .get('/product/fetchallproductscursor')
+          .withQueryParams({
+            serialNo: 'BC456-4',
+          })
+          .expectStatus(200)
+          .expectJsonLength(1)
+          .expectJsonLike('0', {
+            serialNo: 'BC456-4',
+            name: dto.name,
+          });
+      });
+
+      it('should get with partial serialNo', () => {
+        return pactum
+          .spec()
+          .get('/product/fetchallproductscursor')
+          .withQueryParams({
+            categoryId: '$S{categoryId2}',
+            serialNo: 'BC456-',
+          })
+          .expectStatus(200)
+          .expectJsonLength(5)
+          .expectJsonLike('1', {
+            serialNo: 'BC456-1',
+            name: dto.name,
+          });
+      });
+
+      it('should fetch a limited number of products with take, name, and serialNo params', async () => {
+        await pactum
+          .spec()
+          .get('/product/fetchallproductscursor')
+          .withQueryParams({
+            take: '2',
+            categoryId: '$S{categoryId2}',
+            serialNo: 'BC456-',
+          })
+          .expectStatus(200)
+          .expectJsonLength(2)
+          .stores('lastProductId', '[1].id');
+      });
+
+      it('should fech products with take, cursor and serialNo params', async () => {
+        await pactum
+          .spec()
+          .get('/product/fetchallproductscursor')
+          .withQueryParams({
+            take: '3',
+            cursor: '$S{lastProductId}',
+            categoryId: '$S{categoryId2}',
+            serialNo: 'BC',
+          })
+          .expectStatus(200)
+          .expectJsonLength(3)
+          .expectJsonLike('2', {
+            serialNo: 'BC456-4',
+            name: dto.name,
+          });
+      });
+
+      it('should not fech products with name category and serialNo', async () => {
+        await pactum
+          .spec()
+          .get('/product/fetchallproductscursor')
+          .withQueryParams({
+            name: 'Prod',
+            serialNo: 'BC',
+            categoryId: '$S{categoryId}',
+          })
+          .expectStatus(200)
+          .expectBody([]);
+      });
+
+      it('should not get', () => {
+        return pactum
+          .spec()
+          .get('/product/fetchallproductscursor')
+          .withQueryParams({
+            categoryId: '$S{categoryId2}',
+            serialNo: 'BD456-4',
+          })
+          .expectStatus(200)
+          .expectBody([]);
+      });
+    });
   });
 });

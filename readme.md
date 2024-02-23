@@ -111,7 +111,7 @@ Update the system to include this information in the whole process.
   
     npx prisma studio
 
-- To refresh the dev-db
+- Before the first run or to refresh the dev-db
 
     yarn db:dev:restart
 

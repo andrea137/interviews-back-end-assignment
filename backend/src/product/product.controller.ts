@@ -59,8 +59,17 @@ export class ProductController {
   @ApiQuery({
     name: 'categoryId',
     required: false,
-    description:
-      'Fetch products belonging to categoryId category',
+    description: 'Fetch products belonging to categoryId category',
+  })
+  @ApiQuery({
+    name: 'productName',
+    required: false,
+    description: 'Fetch products with name containing the string productName',
+  })
+  @ApiQuery({
+    name: 'serialNo',
+    required: false,
+    description: 'Fetch products with serialNo containing the string serialNo',
   })
   @ApiResponse({
     status: 200,
@@ -70,11 +79,15 @@ export class ProductController {
     @Query('take') take: string,
     @Query('cursor') cursor: string,
     @Query('categoryId') categoryId: string,
+    @Query('productName') productName: string,
+    @Query('serialNo') serialNo: string,
   ): Promise<Product[]> {
     return this.productService.fetchProductsCursorPagination({
       take: Number(take),
       cursor: { id: Number(cursor) },
-      categoryId: Number(categoryId)
+      categoryId: Number(categoryId),
+      productName: productName,
+      serialNo: serialNo
     });
   }
 }

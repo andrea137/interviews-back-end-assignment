@@ -33,8 +33,10 @@ export class ProductService {
     take?: number;
     cursor?: Prisma.ProductWhereUniqueInput | null;
     categoryId?: number;
+    productName?: string;
+    serialNo?: string;
   }): Promise<Product[]> {
-    const { take, cursor, categoryId } = params;
+    const { take, cursor, categoryId, productName, serialNo } = params;
     const options: Prisma.ProductFindManyArgs = {
       skip: 0,
     };
@@ -51,6 +53,23 @@ export class ProductService {
     if (!isNaN(categoryId) && categoryId !== undefined) {
       options.where = {
         categoryId: categoryId,
+      };
+    }
+
+    if (productName !== undefined) {
+      options.where = {
+        ...options.where,
+        name: {
+          contains: productName,
+        },
+      };
+    }
+    if (serialNo !== undefined) {
+      options.where = {
+        ...options.where,
+        serialNo: {
+          contains: serialNo,
+        },
       };
     }
 
