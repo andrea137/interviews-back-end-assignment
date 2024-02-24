@@ -2,7 +2,7 @@ import { ArrayNotEmpty, IsArray, IsNotEmpty, IsNumber, IsString, IsUrl, Validate
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
-class OrderItem {
+export class OrderItem {
     @ApiProperty({ description: 'Product ID' })
     @IsNumber()
     @IsNotEmpty()

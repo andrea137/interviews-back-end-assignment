@@ -6,6 +6,8 @@ import { CategoryDto } from 'src/category/dto';
 import * as pactum from 'pactum';
 import { ProductDto } from 'src/product/dto';
 import { UserDto } from 'src/user/dto';
+import { OrderDto } from 'src/order/dto';
+import { userInfo } from 'os';
 
 describe('App e2e', () => {
   let app: INestApplication;
@@ -218,6 +220,14 @@ describe('App e2e', () => {
           .expectStatus(200)
           .expectJsonLength(2)
           .stores('lastProductId', '[1].id');
+      });
+
+      it('should fetch a given product', async () => {
+        await pactum
+          .spec()
+          .get(`/product/$S{lastProductId}`)
+          .expectStatus(200)
+          .expectJsonLike({id : '$S{lastProductId}'});
       });
 
       it('should fech products with take and cursor params', async () => {
@@ -506,6 +516,66 @@ describe('App e2e', () => {
           })
           .expectStatus(200)
           .expectBody([]);
+      });
+    });
+
+    describe('order', () => {
+
+      const odto: OrderDto = {
+        userId: 0,
+        items: [
+          {
+            productId: 0,
+            quantity: 0,
+          },
+        ],
+        paymentMethod: 'myCC',
+      };
+      describe('add order', () => {
+        it('should add', () => {
+          return pactum
+            .spec()
+            .post('/order/addorder')
+            .withBody({
+              ...odto,
+              userId: '$S{userId}',
+              items: [{ productId: '$S{lastProductId}', quantity: 3 }],
+            })
+            .expectStatus(201)
+            .stores('orderId', 'id');
+        });
+
+        it('should have been decremented', () => {
+          return pactum
+            .spec()
+            .get(`/product/$S{lastProductId}`)
+            .expectStatus(200)
+            .expectJsonLike({quantity: 97});
+        });
+
+        it('should not add quantity > available items', () => {
+          return pactum
+            .spec()
+            .post('/order/addorder')
+            .withBody({
+              ...odto,
+              userId: '$S{userId}',
+              items: [{ productId: '$S{lastProductId}', quantity: 300 }],
+            })
+            .expectStatus(500);
+        });
+
+        it('should throw if items empty', () => {
+          return pactum
+            .spec()
+            .post('/order/addorder')
+            .withBody({
+              ...odto,
+              userId: '$S{userId}',
+              items: [],
+            })
+            .expectStatus(400);
+        });
       });
     });
   });

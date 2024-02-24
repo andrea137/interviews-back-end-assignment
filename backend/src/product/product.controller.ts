@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Query } from '@nestjs/common';
+import { Controller, Post, Get, Body, Query, Param } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { ProductDto } from './dto';
 import { Product } from '@prisma/client';
@@ -89,5 +89,15 @@ export class ProductController {
       productName: productName,
       serialNo: serialNo,
     });
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Fetch a given product' })
+  @ApiResponse({
+    status: 200,
+    description: 'The product have been successfully fetched.',
+  })
+  findOne(@Param('id') id: string) {
+    return this.productService.findOne(+id);
   }
 }

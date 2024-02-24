@@ -29,6 +29,11 @@ export class ProductService {
     }
   }
 
+  async findOne(id: number) {
+    return this.prisma.product.findUnique({ where: { id: id } });
+  }
+
+
   async fetchProductsCursorPagination(params: {
     take?: number;
     cursor?: Prisma.ProductWhereUniqueInput | null;
