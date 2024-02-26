@@ -14,17 +14,17 @@ datasource db {
 }
 
 model Product {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  serialNo  String @unique
-  name      String
-  imageURL  String
-  price     Float    // TODO: this could be better modeled considering currency
-  quantity  Int
-  categoryId Int     // This field acts as the foreign key
-  category   Category @relation(fields: [categoryId], references: [id])
-  items     OrderItem[] 
+  id         Int         @id @default(autoincrement())
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  serialNo   String      @unique
+  name       String
+  imageURL   String
+  price      Float // TODO: this could be better modeled considering currency
+  quantity   Int
+  categoryId Int // This field acts as the foreign key
+  category   Category    @relation(fields: [categoryId], references: [id])
+  items      OrderItem[]
 }
 
 model Category {
@@ -34,31 +34,33 @@ model Category {
 }
 
 model User {
-  id        Int      @id @default(autoincrement()) 
+  id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   name      String
   surname   String
-  email     String @unique
+  email     String   @unique
   orders    Order[]
 }
 
 model Order {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  userId    Int
-  user      User @relation(fields: [userId], references: [id])  
-  items     OrderItem[]
+  id            Int         @id @default(autoincrement())
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  userId        Int
+  transactionId String      @unique
+  totalPrice    Float
+  user          User        @relation(fields: [userId], references: [id])
+  items         OrderItem[]
 }
 
 model OrderItem {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
-  productId Int 
-  product   Product @relation(fields: [productId], references: [id]) 
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id])
   quantity  Int
   updatedAt DateTime @updatedAt
   orderId   Int
-  order     Order @relation(fields: [orderId], references: [id])
+  order     Order    @relation(fields: [orderId], references: [id])
 }

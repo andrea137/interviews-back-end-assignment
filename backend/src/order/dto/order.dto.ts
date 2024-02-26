@@ -1,18 +1,50 @@
-import { ArrayNotEmpty, IsArray, IsNotEmpty, IsNumber, IsString, IsUrl, ValidateNested } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
+export class CreditCard {
+  @ApiProperty({
+    description: 'The credit card number',
+    example: '4111111111111111',
+  })
+  @IsString()
+  @IsNotEmpty()
+  cardNumber: string;
+
+  @ApiProperty({ description: 'The expiry month', example: '12' })
+  @IsString()
+  @IsNotEmpty()
+  expiryMonth: string;
+
+  @ApiProperty({ description: 'The expiry year', example: '2023' })
+  @IsString()
+  @IsNotEmpty()
+  expiryYear: string;
+
+  @ApiProperty({ description: 'The cvv', example: '123' })
+  @IsString()
+  @IsNotEmpty()
+  cvv: string;
+}
+
 export class OrderItem {
-    @ApiProperty({ description: 'Product ID' })
-    @IsNumber()
-    @IsNotEmpty()
-    productId: number;
-  
-    @ApiProperty({ description: 'Number of products' })
-    @IsNumber()
-    @IsNotEmpty()
-    quantity: number;
-  }  
+  @ApiProperty({ description: 'Product ID' })
+  @IsNumber()
+  @IsNotEmpty()
+  productId: number;
+
+  @ApiProperty({ description: 'Number of products' })
+  @IsNumber()
+  @IsNotEmpty()
+  quantity: number;
+}
 
 export class OrderDto {
   @ApiProperty({ description: 'The user (id) placing the order' })
@@ -27,8 +59,8 @@ export class OrderDto {
   @Type(() => OrderItem)
   items: OrderItem[];
 
-  @ApiProperty({ description: 'The payment methood' })
-  @IsString()
+  @ApiProperty({ description: 'The credit card data' })
+  @Type(() => CreditCard)
   @IsNotEmpty()
-  paymentMethod: string;
+  creditCard: CreditCard;
 }

@@ -2,57 +2,44 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrderDto, OrderItem } from './dto';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { HttpService } from '@nestjs/axios';
+import { ConfigService } from '@nestjs/config';
+import { lastValueFrom } from 'rxjs';
+import { PaymentReqDto, Status } from 'src/mockpayment/dto';
 
 @Injectable()
 export class OrderService {
-  constructor(private prisma: PrismaService) {}
-
-  async addOrder1(dto: OrderDto) {
-    const { userId, items, paymentMethod } = dto;
-
-    try {
-      await this.checkItems(items);
-      const order = await this.prisma.order.create({
-        data: {
-          userId,
-        },
-      });
-      let itemsWithOrderId = items.map((item) => ({
-        orderId: order.id,
-        productId: item.productId,
-        quantity: item.quantity,
-      }));
-      let res = await this.prisma.orderItem.createMany({
-        data: itemsWithOrderId,
-      });
-      if (res.count !== itemsWithOrderId.length) {
-        throw new Error('Failed to create some OrderItems');
-      }
-      // Here I must update the product available quantity and revert everything if any product is not available in enough quantity
-      return order;
-    } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError) {
-        if (error.code === 'P2002') {
-          throw new ForbiddenException('Product already present.');
-        } else if (error.code === 'P2003') {
-          throw new ForbiddenException('Foreign key violation.');
-        }
-      }
-      throw error;
-    }
-  }
+  constructor(
+    private prisma: PrismaService,
+    private httpService: HttpService,
+    private config: ConfigService,
+  ) {}
 
   async addOrder(dto: OrderDto) {
-    const { userId, items, paymentMethod } = dto;
+    const { userId, items, creditCard } = dto;
 
     try {
-      // TODO: it would be safer to add constraints and trigger directly in the db instead of the following check, prisma do not support this
-      await this.checkItems(items);
+      // TODO: it would be safer to add constraints and trigger directly in the db to check the product availability.
+      // Here it is checked while calculating the price.
+      const totalPrice = await this.computeTotalPrice(items);
+
+      //  Check the balance
+      // TODO: here we should use a real system
+      const endpt = this.config.get('PAYMENT_SERVICE_ENDPOINT');
+      const req: PaymentReqDto = { ...creditCard, amount: totalPrice };
+      const response$ = await this.httpService.post(endpt, req);
+      const response = await lastValueFrom(response$);
+
+      if (response.data.status !== Status.Approved) {
+        throw new ForbiddenException(`Trransaction ${response.data.status}.`);
+      }
 
       await this.prisma.$transaction(async () => {
         const order = await this.prisma.order.create({
           data: {
             userId,
+            transactionId: response.data.transactionId,
+            totalPrice,
           },
         });
 
@@ -112,4 +99,49 @@ export class OrderService {
       }
     });
   }
+
+  async computeTotalPrice(items: OrderItem[]): Promise<number> {
+    const products = await this.prisma.product.findMany({
+      where: {
+        id: {
+          in: items.map((item) => item.productId),
+        },
+      },
+    });
+
+    let totalPrice = 0;
+
+    items.forEach((item) => {
+      const foundProduct = products.find(
+        (product) => product.id === item.productId,
+      );
+
+      if (!foundProduct) {
+        throw new Error(`Product with id ${item.productId} not found.`);
+      }
+
+      if (foundProduct.quantity < item.quantity) {
+        throw new Error(
+          `Product with id ${item.productId} has only ${foundProduct.quantity} items left, but ${item.quantity} were requested.`,
+        );
+      }
+
+      totalPrice += foundProduct.price * item.quantity;
+    });
+
+    return totalPrice;
+  }
+
+  // const total = await this.prisma.product.aggregate({
+  //   _sum: {
+  //     price: true,
+  //   },
+  //   where: {
+  //     id: {
+  //       in: items.map((item) => item.productId),
+  //     },
+  //   },
+  // });
+
+  //return total._sum.price;
 }

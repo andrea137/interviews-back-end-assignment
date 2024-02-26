@@ -16,10 +16,10 @@ export class OrderController {
     description: 'The order has been successfully created.',
   })
   @ApiResponse({
-    status: 400,
+    status: 403,
     description: 'The order has not been created.',
   })
-  async addProduct(@Body() dto: OrderDto) {
+  async addOrder(@Body() dto: OrderDto) {
     return this.orderService.addOrder(dto);
   }
 }
