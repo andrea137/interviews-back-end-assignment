@@ -7,7 +7,7 @@ import * as pactum from 'pactum';
 import { ProductDto } from 'src/product/dto';
 import { UserDto } from 'src/user/dto';
 import { OrderDto } from 'src/order/dto';
-import { userInfo } from 'os';
+import { PaymentReqDto, Status } from '../src/mockpayment/dto';
 
 describe('App e2e', () => {
   let app: INestApplication;
@@ -227,7 +227,7 @@ describe('App e2e', () => {
           .spec()
           .get(`/product/$S{lastProductId}`)
           .expectStatus(200)
-          .expectJsonLike({id : '$S{lastProductId}'});
+          .expectJsonLike({ id: '$S{lastProductId}' });
       });
 
       it('should fech products with take and cursor params', async () => {
@@ -520,7 +520,6 @@ describe('App e2e', () => {
     });
 
     describe('order', () => {
-
       const odto: OrderDto = {
         userId: 0,
         items: [
@@ -550,7 +549,7 @@ describe('App e2e', () => {
             .spec()
             .get(`/product/$S{lastProductId}`)
             .expectStatus(200)
-            .expectJsonLike({quantity: 97});
+            .expectJsonLike({ quantity: 97 });
         });
 
         it('should not add quantity > available items', () => {
@@ -575,6 +574,50 @@ describe('App e2e', () => {
               items: [],
             })
             .expectStatus(400);
+        });
+      });
+    });
+
+    describe('mockpayment', () => {
+      const mpdto: PaymentReqDto = {
+        cardNumber: '4111111111111111',
+        expiryMonth: '12',
+        expiryYear: '2024',
+        cvv: '123',
+        amount: 100,
+      };
+      describe('request payment', () => {
+        it('should approve', () => {
+          return pactum
+            .spec()
+            .post('/mockpayment/paymentRequest')
+            .withBody(mpdto)
+            .expectStatus(201)
+            .expectJsonLike({ status: Status.Approved });
+        });
+
+        it('should decline', () => {
+          return pactum
+            .spec()
+            .post('/mockpayment/paymentRequest')
+            .withBody({
+              ...mpdto,
+              expiryYear:'2023',
+            })
+            .expectStatus(201)
+            .expectJsonLike({ status: Status.Declined });
+        });
+
+        it('should decline', () => {
+          return pactum
+            .spec()
+            .post('/mockpayment/paymentRequest')
+            .withBody({
+              ...mpdto,
+              amount: 1001,
+            })
+            .expectStatus(201)
+            .expectJsonLike({ status: Status.Declined });
         });
       });
     });
