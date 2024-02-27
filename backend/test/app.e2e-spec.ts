@@ -6,7 +6,7 @@ import { CategoryDto } from 'src/category/dto';
 import * as pactum from 'pactum';
 import { ProductDto } from 'src/product/dto';
 import { UserDto } from 'src/user/dto';
-import { OrderDto } from 'src/order/dto';
+import { CreditCard, OrderDto } from '../src/order/dto';
 import { PaymentReqDto, Status } from '../src/mockpayment/dto';
 
 describe('App e2e', () => {
@@ -520,6 +520,13 @@ describe('App e2e', () => {
     });
 
     describe('order', () => {
+      const currentDate = new Date();
+      const ccdto: CreditCard = {
+        cardNumber: '4111111111111111',
+        expiryMonth: String(currentDate.getMonth() + 2),
+        expiryYear: String(currentDate.getFullYear()),
+        cvv: '123',
+      };
       const odto: OrderDto = {
         userId: 0,
         items: [
@@ -528,7 +535,7 @@ describe('App e2e', () => {
             quantity: 0,
           },
         ],
-        paymentMethod: 'myCC',
+        creditCard: ccdto,
       };
       describe('add order', () => {
         it('should add', () => {
@@ -542,6 +549,37 @@ describe('App e2e', () => {
             })
             .expectStatus(201)
             .stores('orderId', 'id');
+        });
+
+        it('should decline', () => {
+          return pactum
+            .spec()
+            .post('/order/addorder')
+            .withBody({
+              ...odto,
+              creditCard: {
+                ...ccdto,
+                expiryYear: String(currentDate.getFullYear() - 1),
+              },
+              userId: '$S{userId}',
+              items: [{ productId: '$S{lastProductId}', quantity: 3 }],
+            })
+            .expectStatus(403)
+            .expectJsonLike({ message: 'Transaction declined.' });
+        });
+
+        it('should decline, not enough money', () => {
+          return pactum
+            .spec()
+            .post('/order/addorder')
+            .withBody({
+              ...odto,
+              creditCard: ccdto,
+              userId: '$S{userId}',
+              items: [{ productId: '$S{lastProductId}', quantity: 60 }],
+            })
+            .expectStatus(403)
+            .expectJsonLike({ message: 'Transaction declined.' });
         });
 
         it('should have been decremented', () => {
@@ -602,7 +640,7 @@ describe('App e2e', () => {
             .post('/mockpayment/paymentRequest')
             .withBody({
               ...mpdto,
-              expiryYear:'2023',
+              expiryYear: '2023',
             })
             .expectStatus(201)
             .expectJsonLike({ status: Status.Declined });

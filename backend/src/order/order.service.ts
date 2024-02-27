@@ -5,7 +5,7 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
-import { PaymentReqDto, Status } from 'src/mockpayment/dto';
+import { PaymentReqDto, Status } from '../mockpayment/dto';
 
 @Injectable()
 export class OrderService {
@@ -27,11 +27,11 @@ export class OrderService {
       // TODO: here we should use a real system
       const endpt = this.config.get('PAYMENT_SERVICE_ENDPOINT');
       const req: PaymentReqDto = { ...creditCard, amount: totalPrice };
-      const response$ = await this.httpService.post(endpt, req);
+      const response$ = this.httpService.post(endpt, req);
       const response = await lastValueFrom(response$);
 
       if (response.data.status !== Status.Approved) {
-        throw new ForbiddenException(`Trransaction ${response.data.status}.`);
+        throw new ForbiddenException(`Transaction ${response.data.status}.`);
       }
 
       await this.prisma.$transaction(async () => {
@@ -72,33 +72,33 @@ export class OrderService {
     }
   }
 
-  async checkItems(items: OrderItem[]) {
-    if (!items || items.length === 0) {
-      throw new Error('Cannot place order without items');
-    }
+  //   async checkItems(items: OrderItem[]) {
+  //     if (!items || items.length === 0) {
+  //       throw new Error('Cannot place order without items');
+  //     }
 
-    // get all product in a single query
-    const products = await this.prisma.product.findMany({
-      where: {
-        id: {
-          in: items.map((item) => item.productId),
-        },
-      },
-    });
+  //     // get all product in a single query
+  //     const products = await this.prisma.product.findMany({
+  //       where: {
+  //         id: {
+  //           in: items.map((item) => item.productId),
+  //         },
+  //       },
+  //     });
 
-    // compare the quantity with the availability
-    items.forEach((item) => {
-      const foundProduct = products.find(
-        (product) => product.id === item.productId,
-      );
+  //     // compare the quantity with the availability
+  //     items.forEach((item) => {
+  //       const foundProduct = products.find(
+  //         (product) => product.id === item.productId,
+  //       );
 
-      if (!foundProduct || foundProduct.quantity < item.quantity) {
-        throw new Error(
-          `Product with id ${item.productId} has only ${foundProduct?.quantity} items left`,
-        );
-      }
-    });
-  }
+  //       if (!foundProduct || foundProduct.quantity < item.quantity) {
+  //         throw new Error(
+  //           `Product with id ${item.productId} has only ${foundProduct?.quantity} items left`,
+  //         );
+  //       }
+  //     });
+  //   }
 
   async computeTotalPrice(items: OrderItem[]): Promise<number> {
     const products = await this.prisma.product.findMany({

@@ -87,6 +87,17 @@ Update the system to include this information in the whole process.
 
 ## How to run
 
+set the environment variables replacng user, pw, and port with the actual values:
+
+DATABASE_URL="postgresql://user:pw@localhost:3000/nest?schema=public"
+PAYMENT_SERVICE_ENDPOINT="http://localhost:3333/mockpayment/paymentRequest"
+
+in files:
+
+.env for dev
+
+.env.test.local for test
+
 - To run the tests:
   
   yarn test:e2e
